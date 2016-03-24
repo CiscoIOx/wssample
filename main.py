@@ -39,7 +39,7 @@ def setup_logging(cfg):
 
     # The default is to use a Rotating File Handler
     log_file_dir = os.getenv("CAF_APP_LOG_DIR", "/tmp")
-    log_file_path = os.path.join(log_file_dir, "thingtalk.log")
+    log_file_path = os.path.join(log_file_dir, "wssample.log")
 
     # Lets cap the file at 1MB and keep 3 backups
     rfh = RotatingFileHandler(log_file_path, maxBytes=1024*1024, backupCount=3)
@@ -65,28 +65,37 @@ if __name__ == '__main__':
     cfg = SafeConfigParser()
     cfg.read(CONFIG_FILE)
     setup_logging(cfg)
-    wsserver = cfg.get("ws","server", None)
-    ws = create_connection(wsserver)
+
+    ws = None
 
     def terminate_self():
         logger.info("Stopping the application")
         try:
-            ws.close()
+            if ws:
+                ws.close()
         except Exception as ex:
             logger.exception("Error stopping the app gracefully.")
         logger.info("Killing self..")
         os.kill(os.getpid(), 9)
 
+    wsserver = cfg.get("ws","server", None)
+    try:
+        ws = create_connection(wsserver)
+    except Exception as ex:
+        ws = None
+        logger.exception("Error creating a websocket connection to %s" % wsserver)
+        terminate_self()
+        
     while True:
         try:
             msg = "Current date and time is : %s" % str(datetime.datetime.now())
-            print "Sending Message: %s" % msg
+            logger.info("Sending Message: %s" % msg)
             ws.send(msg)
-            print "\t > Sent"
-            print "\t < Receiving..."
+            logger.debug("\t > Sent")
+            logger.debug("\t < Receiving...")
             result =  ws.recv()
-            print "Received '%s'" % result    
-            print "Sleeping for 5 seconds.."
+            logger.info("Received '%s'" % result)  
+            logger.info("Sleeping for 5 seconds..")
             time.sleep(5)    
         except KeyboardInterrupt:
             terminate_self()
