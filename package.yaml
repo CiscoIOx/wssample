@@ -1,0 +1,24 @@
+descriptor-schema-version: 2.0
+ 
+info:
+  name: Websocket Demo 
+  description: "A simple websocket client example"
+  version: "1.0"
+  author-link: "http://www.cisco.com"
+  author-name: "Cisco Systems"
+ 
+app:
+  type: paas
+
+  resources:
+    profile: c1.small
+ 
+    network:
+      - 
+        interface-name: eth0
+
+# Specify runtime and startup
+  startup:
+    runtime: python 
+    runtime-version: 2.7
+    target: main.py
